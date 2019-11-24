@@ -27,6 +27,8 @@ test_classification <- PimaIndiansDiabetes[-train_pos, ]
 ```
 
 ## Support Vector Machine with Linear Kernel
+* The SVM with linear kernel has a relatively moderate accuracy of 78.7% when applied to the test set. 
+* The AUC is 0.8121.
 
 ```{r}
 set.seed(100)
@@ -51,6 +53,7 @@ confusionMatrix(svm_test, reference = test_classification$diabetes)
 ```
 
 ## Support Vector Machine with Radial Kernel
+* We see here that the SVM with raidal kernel performed worse in comparsion to the linear kernel with an accuracy of 74.0% when applied to the test set.
 
 ```{r}
 set.seed(123)
@@ -88,7 +91,7 @@ rf_sa <- safs(x = PimaIndiansDiabetes[,1:8], y = PimaIndiansDiabetes[,9],
 rf_sa
 ```
 
-* Compared to the previous support vector machine with all predictors, this model performed with a lower accuracy.
+* Compared to the previous support vector machine with linear kernel and all predictors, this model performed with a lower accuracy.
 
 ```{r}
 set.seed(321)
