@@ -1,0 +1,109 @@
+---
+title: "HW6"
+author: "Brian Chang"
+date: "2019/11/23"
+output: html_document
+---
+
+```{r load relevant libraries, include=FALSE}
+library(tidyverse)
+library(mlbench)
+library(caret)
+library(pROC)
+```
+
+## Load Data
+
+```{r}
+data("PimaIndiansDiabetes")
+
+PimaIndiansDiabetes[is.na(PimaIndiansDiabetes)] = 0
+
+train_size = floor(0.75 * nrow(PimaIndiansDiabetes))
+train_pos <- sample(seq_len(nrow(PimaIndiansDiabetes)), size = train_size)
+
+train_classification <- PimaIndiansDiabetes[train_pos, ]
+test_classification <- PimaIndiansDiabetes[-train_pos, ]
+```
+
+## Support Vector Machine with Linear Kernel
+
+```{r}
+set.seed(100)
+control = trainControl(method = "repeatedcv", repeats = 5, classProbs = T, savePredictions = T)
+
+svm = train(diabetes ~ .,  data = train_classification, method = "svmLinear", tuneLength = 10, trControl = control)
+
+svm
+```
+
+
+```{r}
+roc(predictor = svm$pred$pos, response = svm$pred$obs)$auc
+
+plot(x = roc(predictor = svm$pred$pos, response = svm$pred$obs)$specificities, y = roc(predictor = svm$pred$pos, response = svm$pred$obs)$sensitivities, col= "blue", xlim = c(1, 0), type ="l", ylab = "Sensitivity", xlab = "Specificity")
+```
+
+
+```{r}
+svm_test = predict(svm, newdata = test_classification)
+confusionMatrix(svm_test, reference = test_classification$diabetes)
+```
+
+## Support Vector Machine with Radial Kernel
+
+```{r}
+set.seed(123)
+control = trainControl(method = "repeatedcv", repeats = 5, classProbs = T, savePredictions = T)
+
+svm_radial = train(diabetes ~ .,  data = train_classification, method = "svmRadial", tuneLength = 10, trControl = control)
+
+svm_radial
+```
+
+
+```{r}
+roc(predictor = svm_radial$pred$pos, response = svm_radial$pred$obs)$auc
+
+plot(x = roc(predictor = svm_radial$pred$pos, response = svm_radial$pred$obs)$specificities, y = roc(predictor = svm_radial$pred$pos, response = svm_radial$pred$obs)$sensitivities, col= "blue", xlim = c(1, 0), type ="l", ylab = "Sensitivity", xlab = "Specificity")
+```
+
+
+```{r}
+svm_radial_test = predict(svm_radial, newdata = test_classification)
+confusionMatrix(svm_radial_test, reference = test_classification$diabetes)
+```
+
+## Simulated Annealing followed by Support Vector Machine
+* We see that glucose and age were the two top variables selected and will use those in the support vector machine.
+```{r}
+sa_ctrl <- safsControl(functions = rfSA,
+                       method = "repeatedcv",
+                       repeats = 5,
+                       improve = 50)
+set.seed(10)
+rf_sa <- safs(x = PimaIndiansDiabetes[,1:8], y = PimaIndiansDiabetes[,9],
+              iters = 10,
+              safsControl = sa_ctrl)
+rf_sa
+```
+
+* Compared to the previous support vector machine with all predictors, this model performed with a lower accuracy.
+
+```{r}
+set.seed(321)
+control = trainControl(method = "repeatedcv", repeats = 5, classProbs = T, savePredictions = T)
+
+svm_feature = train(diabetes ~ glucose + age,  data = train_classification, method = "svmLinear", tuneLength = 10, trControl = control)
+
+svm_feature
+```
+
+* The AUC for this model is also lower than the previous model.
+
+```{r}
+roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$auc
+
+plot(x = roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$specificities, y = roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$sensitivities, col= "blue", xlim = c(1, 0), type ="l", ylab = "Sensitivity", xlab = "Specificity")
+```
+
