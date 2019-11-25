@@ -2,7 +2,9 @@
 title: "HW6"
 author: "Brian Chang"
 date: "2019/11/23"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r load relevant libraries, include=FALSE}
@@ -91,8 +93,6 @@ rf_sa <- safs(x = PimaIndiansDiabetes[,1:8], y = PimaIndiansDiabetes[,9],
 rf_sa
 ```
 
-* Compared to the previous support vector machine with linear kernel and all predictors, this model performed with a lower accuracy.
-
 ```{r}
 set.seed(321)
 control = trainControl(method = "repeatedcv", repeats = 5, classProbs = T, savePredictions = T)
@@ -108,5 +108,11 @@ svm_feature
 roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$auc
 
 plot(x = roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$specificities, y = roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$sensitivities, col= "blue", xlim = c(1, 0), type ="l", ylab = "Sensitivity", xlab = "Specificity")
+```
+
+* When applied to the test set, the model performs with a moderate accuracy of 76.6% but worse than the SVM with linear kernel with all the predictor variables.
+```{r}
+svm_feature_test = predict(svm_feature, newdata = test_classification)
+confusionMatrix(svm_feature_test, reference = test_classification$diabetes)
 ```
 
