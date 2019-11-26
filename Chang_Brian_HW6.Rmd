@@ -79,8 +79,8 @@ svm_radial_test = predict(svm_radial, newdata = test_classification)
 confusionMatrix(svm_radial_test, reference = test_classification$diabetes)
 ```
 
-## Simulated Annealing followed by Support Vector Machine
-* We see that glucose and age were the two top variables selected and will use those in the support vector machine.
+## Simulated Annealing followed by Support Vector Machine with Linear Kernel
+* We select for the top 5 variables according to the simmulated annealing.
 ```{r}
 sa_ctrl <- safsControl(functions = rfSA,
                        method = "repeatedcv",
@@ -97,12 +97,12 @@ rf_sa
 set.seed(321)
 control = trainControl(method = "repeatedcv", repeats = 5, classProbs = T, savePredictions = T)
 
-svm_feature = train(diabetes ~ glucose + age,  data = train_classification, method = "svmLinear", tuneLength = 10, trControl = control)
+svm_feature = train(diabetes ~ glucose + age + insulin + mass + pregnant,  data = train_classification, method = "svmLinear", tuneLength = 10, trControl = control)
 
 svm_feature
 ```
 
-* The AUC for this model is also lower than the previous model.
+* The AUC for this model is slightly lower than the previous model but by a negligible difference.
 
 ```{r}
 roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$auc
@@ -110,9 +110,32 @@ roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$auc
 plot(x = roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$specificities, y = roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$sensitivities, col= "blue", xlim = c(1, 0), type ="l", ylab = "Sensitivity", xlab = "Specificity")
 ```
 
-* When applied to the test set, the model performs with a moderate accuracy of 76.6% but worse than the SVM with linear kernel with all the predictor variables.
+* When applied to the test set, the model performs with a moderate accuracy of 78.1%, which is comparable to the SVM with linear kernel with all the predictor variables.
 ```{r}
 svm_feature_test = predict(svm_feature, newdata = test_classification)
 confusionMatrix(svm_feature_test, reference = test_classification$diabetes)
 ```
 
+## SVM with Radial Kernel after Feature Selection
+* Accuracy is slightly lower than previous SVM with all predictor variables.
+* The lower accuracy may be accounted for when taking into account that because we removed some predictors from the model, we may be over-fitting our SVM as a result.
+```{r}
+set.seed(321)
+control = trainControl(method = "repeatedcv", repeats = 5, classProbs = T, savePredictions = T)
+
+svm_feature = train(diabetes ~ glucose + age + insulin + mass + pregnant,  data = train_classification, method = "svmRadial", tuneLength = 10, trControl = control)
+
+svm_feature
+```
+
+
+```{r}
+roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$auc
+
+plot(x = roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$specificities, y = roc(predictor = svm_feature$pred$pos, response = svm_feature$pred$obs)$sensitivities, col= "blue", xlim = c(1, 0), type ="l", ylab = "Sensitivity", xlab = "Specificity")
+```
+
+```{r}
+svm_feature_test = predict(svm_feature, newdata = test_classification)
+confusionMatrix(svm_feature_test, reference = test_classification$diabetes)
+```
